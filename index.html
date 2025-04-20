@@ -39,14 +39,14 @@
 		//  Add player game object
 		const player = add([
 			sprite("player2"),
-			pos(550, 800),
+			pos(950, 800),
 			area(),
 			anchor("center"),
 		])
 
 		const enemy = add([
 			sprite("ai2"),
-			pos(width() - 550, height() - 800),
+			pos(width() - 950, height() - 800),
 			anchor("center"),
 			state("move", [ "idle", "attack", "move" ]),
 		])
