@@ -9,21 +9,113 @@
         <link href="style.css" rel="stylesheet" type="text/css" />
         <style>
             /* CSS */
-            
+
         </style>
-        
+
         <title>Title</title>
     </head>
     <body>
         <!-- HTML -->
-        
-        
+
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
         <!-- <script src="script.js"></script> -->
         <script>
             // JS
-            
-            
+            //  Start kaboom
+        kaboom()
+
+
+		loadSprite("", "/sprites/.png")
+		loadSprite("", "/sprites/.png")
+
+		const SPEED = 450
+		const ENEMY_SPEED = 0
+		const BULLET_SPEED = 1475
+
+		//  Add player game object
+		const player = add([
+			sprite("bean"),
+			pos(550, 800),
+			area(),
+			anchor("center"),
+		])
+
+		const enemy = add([
+			sprite("ghosty"),
+			pos(width() - 550, height() - 800),
+			anchor("center"),
+			state("move", [ "idle", "attack", "move" ]),
+		])
+
+		enemy.onStateEnter("idle", async () => {
+			await wait(0.01)
+			enemy.enterState("attack")
+		})
+
+
+		enemy.onStateEnter("attack", async () => {
+
+
+			if (player.exists()) {
+
+				const dir = player.pos.sub(enemy.pos).unit()
+
+
+				add([
+					pos(enemy.pos),
+					move(dir, BULLET_SPEED),
+					circle(12, 12),
+					area(),
+					offscreen({ destroy: true }),
+					anchor("center"),
+					color(BLUE),
+					"bullet",
+				])
+
+			}
+
+			await wait(0.1)
+			enemy.enterState("move")
+
+		})
+
+		enemy.onStateEnter("move", async () => {
+			await wait(0.06)
+			enemy.enterState("idle")
+		})
+
+
+		enemy.onStateUpdate("move", () => {
+			if (!player.exists()) return
+			const dir = player.pos.sub(enemy.pos).unit()
+			enemy.move(dir.scale(ENEMY_SPEED))
+		})
+
+		//  getting hit kills you
+		player.onCollide("bullet", (bullet) => {
+			destroy(bullet)
+			destroy(player)
+			addKaboom(bullet.pos)
+		})
+
+		//  movement
+		onKeyDown("a", () => {
+			player.move(-SPEED, 0)
+		})
+
+		onKeyDown("d", () => {
+			player.move(SPEED, 0)
+		})
+
+		onKeyDown("w", () => {
+			player.move(0, -SPEED)
+		})
+
+		onKeyDown("s", () => {
+			player.move(0, SPEED)
+		})
+
         </script>
     </body>
 </html>

@@ -15,7 +15,6 @@
 - [ ] add movement for the player(deadline: 2-18)
 - [ ] add attacks to the ai  (deadline: 2-20)
   - [ ] attacks follow player direction
-  - [ ] add more than one attack to the ai / attack patterns
 - [ ] make it playable  (deadline: 2-22)
 
 
@@ -25,6 +24,7 @@
 - [ ] add more than one difficulty
   - [ ] easy medium hard
 - [ ] another way to end the level other than dying
+- [ ] add more than one attack to the ai / attack patterns
 
 
 <!-- EXAMPLE
