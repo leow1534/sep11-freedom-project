@@ -25,99 +25,190 @@
         <script>
             // JS
             //  Start kaboom
+kaboom()
 
-        kaboom()
+scene("main", () => {
 
+	// Background
+	add([
+		rect(width(), height()),
+		pos(0, 0),
+		color(0),
+		z(-10),
+		fixed(),
+	])
 
-		loadSprite("player2", "/sprites/player2.png")
-		loadSprite("ai2", "/sprites/ai2.png")
+	loadSprite("player2", "/sprites/player2.png")
+	loadSprite("ai2", "/sprites/ai2.png")
 
-		const SPEED = 450
-		const ENEMY_SPEED = 0
-		const BULLET_SPEED = 1475
+	const SPEED = 350
+	const ENEMY_SPEED = 0
+	const BULLET_SPEED = 900
+	const BULLET_SPEED2 = 500
 
-		//  Add player game object
-		const player = add([
-			sprite("player2"),
-			pos(950, 800),
-			area(),
-			anchor("center"),
-		])
+	function degToRad(deg) {
+		return deg * (Math.PI / 180)
+	}
 
-		const enemy = add([
-			sprite("ai2"),
-			pos(width() - 950, height() - 800),
-			anchor("center"),
-			state("move", [ "idle", "attack", "move" ]),
-		])
+	// Player
+	const player = add([
+		sprite("player2"),
+		pos(950, 800),
+		area({ shape: new Rect(vec2(0), 16, 16) }),
+		scale(0.65),
+		anchor("center"),
+	])
 
-		enemy.onStateEnter("idle", async () => {
-			await wait(0.01)
-			enemy.enterState("attack")
-		})
+	const hitboxIndicator = add([
+		pos(player.pos),
+		circle(4),
+		color(WHITE),
+		anchor("center"),
+		z(10),
+	])
 
+	player.onUpdate(() => {
+		hitboxIndicator.pos = player.pos
+	})
 
-		enemy.onStateEnter("attack", async () => {
+	// Enemy
+	const enemy = add([
+		sprite("ai2"),
+		pos(width() - 950, height() - 800),
+		anchor("center"),
+		state("move", ["idle", "attack", "attack2", "move"]),
+	])
 
+	async function runSpiralPattern() {
+		const spiralBullets = 40
+		const spiralDelay = 0.1
+		let angle = 0
 
-			if (player.exists()) {
+		for (let i = 0; i < spiralBullets; i++) {
+			if (!enemy.exists()) return
 
-				const dir = player.pos.sub(enemy.pos).unit()
+			const rad = degToRad(angle)
+			const dir = vec2(Math.cos(rad), Math.sin(rad))
 
+			add([
+				pos(enemy.pos),
+				move(dir, BULLET_SPEED * 0.4),
+				circle(12),
+				area(),
+				offscreen({ destroy: true }),
+				anchor("center"),
+				color(BLUE),
+				"bullet",
+			])
+
+			angle += 15
+			await wait(spiralDelay)
+		}
+	}
+
+	enemy.onStateEnter("idle", async () => {
+		await wait(0.01)
+		enemy.enterState("attack")
+	})
+
+	enemy.onStateEnter("attack", async () => {
+		runSpiralPattern()
+		enemy.enterState("attack2")
+	})
+
+	enemy.onStateEnter("attack2", async () => {
+		const bulletCount = 16
+		const burstCount = 5
+		const burstDelay = 0.3
+		const cooldown = 0.15
+
+		for (let burst = 0; burst < burstCount; burst++) {
+			const burstAngleOffset = degToRad(rand(0, 360))
+
+			for (let i = 0; i < bulletCount; i++) {
+				const angle = (2 * Math.PI / bulletCount) * i + burstAngleOffset
+				const direction = vec2(Math.cos(angle), Math.sin(angle))
 
 				add([
-					pos(enemy.pos),
-					move(dir, BULLET_SPEED),
-					circle(12, 12),
+					pos(enemy.pos.x, enemy.pos.y),
+					move(direction, BULLET_SPEED2),
+					circle(25),
 					area(),
-					offscreen({ destroy: true }),
 					anchor("center"),
 					color(BLUE),
+					offscreen({ destroy: true }),
 					"bullet",
 				])
-
 			}
 
-			await wait(0.1)
-			enemy.enterState("move")
+			await wait(burstDelay)
+		}
 
+		await wait(cooldown)
+		enemy.enterState("move")
+	})
+
+	enemy.onStateEnter("move", async () => {
+		await wait(0.06)
+		enemy.enterState("idle")
+	})
+
+	enemy.onStateUpdate("move", () => {
+		if (!player.exists()) return
+		const dir = player.pos.sub(enemy.pos).unit()
+		enemy.move(dir.scale(ENEMY_SPEED))
+	})
+
+	// Player death
+	player.onCollide("bullet", (bullet) => {
+		destroy(bullet)
+		addKaboom(bullet.pos)
+		destroy(player)
+		wait(1, () => {
+			go("gameover")
 		})
+	})
 
-		enemy.onStateEnter("move", async () => {
-			await wait(0.06)
-			enemy.enterState("idle")
-		})
+	// Movement controls
+	onKeyDown("a", () => {
+		player.move(-SPEED, 0)
+	})
 
+	onKeyDown("d", () => {
+		player.move(SPEED, 0)
+	})
 
-		enemy.onStateUpdate("move", () => {
-			if (!player.exists()) return
-			const dir = player.pos.sub(enemy.pos).unit()
-			enemy.move(dir.scale(ENEMY_SPEED))
-		})
+	onKeyDown("w", () => {
+		player.move(0, -SPEED)
+	})
 
-		//  getting hit kills you
-		player.onCollide("bullet", (bullet) => {
-			destroy(bullet)
-			destroy(player)
-			addKaboom(bullet.pos)
-		})
+	onKeyDown("s", () => {
+		player.move(0, SPEED)
+	})
+})
 
-		//  movement
-		onKeyDown("a", () => {
-			player.move(-SPEED, 0)
-		})
+// Game Over Scene
+scene("gameover", () => {
+	add([
+		text("Game Over", { size: 64 }),
+		pos(center()),
+		anchor("center"),
+		color(WHITE),
+	])
 
-		onKeyDown("d", () => {
-			player.move(SPEED, 0)
-		})
+	add([
+		text("Press R to Restart", { size: 24 }),
+		pos(center().add(0, 60)),
+		anchor("center"),
+		color(WHITE),
+	])
 
-		onKeyDown("w", () => {
-			player.move(0, -SPEED)
-		})
+	onKeyPress("r", () => {
+		go("main")
+	})
+})
 
-		onKeyDown("s", () => {
-			player.move(0, SPEED)
-		})
+go("main")
 
         </script>
     </body>
