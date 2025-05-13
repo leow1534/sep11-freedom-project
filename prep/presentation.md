@@ -1,16 +1,18 @@
 # Presentation Plan
 
 ## Hook
-* 
+* How many of you guys here know of bullet hell. Bullet hell is a niche game genre where the player try to dodge projectiles that comes from the ai.
 
 ## Product
-* 
+* url link to the github page
 
 ## Process
-* 
+* show the mvp and bmvp and how I transformed my mvp into my bmvp
+* code snippets of the main aspect of my game (the shooting aspect) of it and how I made them.
 
 ## Conclusion
-* 
+* link to prject
+* thank you
 
 <!-- EXAMPLE
 
